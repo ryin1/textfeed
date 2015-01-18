@@ -31,8 +31,7 @@ def sms():
     response = twiml.Response()
     body = request.form['Body']
     if "everyblock" in body:
-        output = body.replace('everyblock','')
-        response.sms("You called 'Everyblock' API on: %s!"%output)
+        response.sms("You called 'Everyblock' API!")
     else:
         response.sms("You did not call 'Everyblock' API.")
     return str(response)
