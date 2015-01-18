@@ -26,7 +26,7 @@ def voice():
 
 
 # SMS Request URL
-@app.route('/sms', methods=['POST'])
+@app.route('/sms', methods=['GET', 'POST'])
 def sms():
     response = twiml.Response()
     body = request.form['Body']
