@@ -36,24 +36,17 @@ def sms():
         textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
-        try:
-            if "'" in textinput:
-                textinput = textinput.split("'")[1]
-            elif '"' in textinput:
-                textinput = textinput.split('"')[1]
-        except IndexError as WeirdEncoding:
-            pass
-
+        #print textinput, type(textinput)
         if textinput.isdigit():
+            print 'textinput is digit'
             texttype = 'zipcodes'
             for metro in metros:
                 everyblock_url = 'https://api.everyblock.com/content/%s/zipcodes'%metro
+                print everyblock_url
                 r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
                 return_data = json.loads(r.text)
                 for i in return_data:
-                    #print i
                     if textinput == i['name']:
-                        #print textinput,'is in',metro
                         metro_final = metro
                         break
         else:
@@ -62,32 +55,61 @@ def sms():
                 everyblock_url = 'https://api.everyblock.com/content/%s/neighborhoods'%metro
                 #print 'trying: ',everyblock_url
                 r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+
                 return_data = json.loads(r.text)
                 for i in return_data:
                     if textinput.title() == i['name']:
-                        #print textinput,'is in',metro
-                        metro_final = metro
-                        textinput = textinput.replace(' ','-')
+                        print textinput,'is in',metro
+                        metro_final = metro.lower()
+                        textinput = textinput.lower().replace(' ','-')
                         break
         #found the metro!
         if metro_final != '':
             everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime'%(metro_final, textinput)
+            #everyblock_url = 'https://api.everyblock.com/content/%s/schemas/'%metro_final
+            print everyblock_url
             r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
             return_data = json.loads(r.text)
+            if not r or return_data['count'] == 0:
+                everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime-reports'%(metro_final, textinput)
+                r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+                #print everyblock_url
+                return_data = json.loads(r.text)
+                #print return_data
+            
             count = 0
-            output = ''
+            #print return_data, type(return_data)
+            #print 'count' in return_data
+            #print return_data['count']
+            if 'count' in return_data or return_data['count'] != 0:
+                output = ''
+            #print return_data
             for event in return_data['results']:
-                date = event['pub_date']
+                #print 'event', event
+                date = event['item_date']
                 #date in good format
                 date = date[5:7]+'/'+date[8:10]+'/'+date[2:4]
-                #time: use dispatch time
-                time = datetime.strptime(event['attributes']['dispatch_time'][:5], '%H:%M')
+                #time: find the time
+                timetype = ''
+                if 'dispatch_time' in event['attributes']:
+                    timetype = 'dispatch_time'
+                elif 'crime_time' in event['attributes']:
+                    timetype = 'crime_time'
+                elif 'occurrence_time' in event['attributes']:
+                    timetype = 'occurrence_time'
+                elif 'offense_time' in event['attributes']:
+                    timetype = 'offense_time'
+                else:
+                    print 'else'
+
+                time = datetime.strptime(event['attributes'][timetype][:5], '%H:%M')
+                #print 'time', time
                 time = time.strftime('%I:%M %p')
+                #print event
                 output += event['title']+' on '+event['location_name']+' at '+date+', '+time+'. '
                 count += 1
-                if count == 2:
+                if count == return_data['count'] or count == 2:
                     break
-        output = str(output)
         response.sms(output)
     else:
         response.sms('Text "everyblock" and your zip code or town to get a feed!')
