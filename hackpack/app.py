@@ -31,7 +31,6 @@ def sms():
     body = request.form['Body']
     if "everyblock" in body:
         textinput = body.replace('everyblock','')
-        textinput = 'university city'#sent from sms
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
         if textinput.isdigit():
