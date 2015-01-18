@@ -29,10 +29,11 @@ def voice():
 @app.route('/sms', methods=['GET', 'POST'])
 def sms():
     response = twiml.Response()
-    body = request.form['Body']
+    body = request.form['Body'].lower()
+    print body
     metro_final = ''
     output = 'Nothing was found.'
-    if "everyblock" in body.lower():
+    if "everyblock" in body:
         textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
