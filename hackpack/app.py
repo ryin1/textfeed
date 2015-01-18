@@ -1,7 +1,4 @@
 import re
-import requests, base64
-import json
-from datetime import datetime
 
 from flask import Flask
 from flask import render_template
@@ -31,7 +28,8 @@ def sms():
     response = twiml.Response()
     body = request.form['Body']
     if "everyblock" in body:
-        response.sms("You called 'Everyblock' API!")
+        output = body.replace('everyblock','')
+        response.sms("You called 'Everyblock' API on: %s!"%output)
     else:
         response.sms("You did not call 'Everyblock' API.")
     return str(response)
