@@ -30,7 +30,7 @@ def sms():
     response = twiml.Response()
     body = request.form['Body']
     if "everyblock" in body:
-        textinput = body.replace('everyblock','')
+        textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
         if textinput.isdigit():
