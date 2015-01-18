@@ -30,10 +30,16 @@ def voice():
 def sms():
     response = twiml.Response()
     body = request.form['Body']
+    metro_final = ''
     if "everyblock" in body:
         output = body.replace('everyblock','')
         response.sms("You called 'Everyblock' API on: %s!"%output)
         r = requests.get('https://api.everyblock.com/content/', headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+        return_data = json.loads(r.text)
+            for i in return_data:
+                if textinput == i['name']:
+                    metro_final = metro
+                    break
     else:
         response.sms("You did not call 'Everyblock' API.")
     return str(response)
