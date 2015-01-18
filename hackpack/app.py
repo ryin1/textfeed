@@ -32,7 +32,7 @@ def sms():
     body = request.form['Body']
     metro_final = ''
     output = 'Nothing was found.'
-    if "everyblock" in body:
+    if "everyblock" in body.lower():
         textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
