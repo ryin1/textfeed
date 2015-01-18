@@ -29,6 +29,8 @@ def voice():
 def sms():
     response = twiml.Response()
     body = request.form['Body']
+    metro_final = ''
+    output = 'Nothing was found.'
     if "everyblock" in body:
         textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
@@ -59,22 +61,23 @@ def sms():
                         textinput = textinput.replace(' ','-')
                         break
         #found the metro!
-        everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime'%(metro_final, textinput)
-        r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
-        return_data = json.loads(r.text)
-        output = ''
-        count = 0
-        for event in return_data['results']:
-            date = event['pub_date']
-            #date in good format
-            date = date[5:7]+'/'+date[8:10]+'/'+date[2:4]
-            #time: use dispatch time
-            time = datetime.strptime(event['attributes']['dispatch_time'][:5], '%H:%M')
-            time = time.strftime('%I:%M %p')
-            output += event['title']+' on '+event['location_name']+' at '+date+', '+time+'. '
-            count += 1
-            if count == 2:
-                break
+        if metro_final != '':
+            everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime'%(metro_final, textinput)
+            r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+            return_data = json.loads(r.text)
+            count = 0
+            output = ''
+            for event in return_data['results']:
+                date = event['pub_date']
+                #date in good format
+                date = date[5:7]+'/'+date[8:10]+'/'+date[2:4]
+                #time: use dispatch time
+                time = datetime.strptime(event['attributes']['dispatch_time'][:5], '%H:%M')
+                time = time.strftime('%I:%M %p')
+                output += event['title']+' on '+event['location_name']+' at '+date+', '+time+'. '
+                count += 1
+                if count == 2:
+                    break
         response.sms(output)
     else:
         response.sms('Text "everyblock" and your zip code or town to get a feed!')
