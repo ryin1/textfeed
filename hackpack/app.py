@@ -1,6 +1,7 @@
 import re
 import requests
 import json
+from datetime import datetime
 
 from flask import Flask
 from flask import render_template
@@ -35,7 +36,14 @@ def sms():
         textinput = body.replace('everyblock ','')
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
-        textinput = textinput.split("'")[1]
+        try:
+            if "'" in textinput:
+                textinput = textinput.split("'")[1]
+            elif '"' in textinput:
+                textinput = textinput.split('"')[1]
+        except IndexError as WeirdEncoding:
+            pass
+
         if textinput.isdigit():
             texttype = 'zipcodes'
             for metro in metros:
