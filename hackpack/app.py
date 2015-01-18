@@ -31,8 +31,33 @@ def sms():
     response = twiml.Response()
     body = request.form['Body']
     if "everyblock" in body:
-        output = body.replace('everyblock','')
-        response.sms("You called 'Everyblock' API on: %s!"%output)
+        textinput = body.replace('everyblock','')
+        if textinput.isdigit():
+        texttype = 'zipcodes'
+        for metro in metros:
+            everyblock_url = 'https://api.everyblock.com/content/%s/zipcodes'%metro
+            r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+            return_data = json.loads(r.text)
+            for i in return_data:
+                #print i
+                if textinput == i['name']:
+                    #print textinput,'is in',metro
+                    metro_final = metro
+                    break
+                else:
+                    texttype = 'neighborhoods'
+                    for metro in metros:
+                        everyblock_url = 'https://api.everyblock.com/content/%s/neighborhoods'%metro
+                        #print 'trying: ',everyblock_url
+                        r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+                        return_data = json.loads(r.text)
+                        for i in return_data:
+                            if textinput.title() == i['name']:
+                                #print textinput,'is in',metro
+                                metro_final = metro
+                                textinput = textinput.replace(' ','-')
+                                break
+        response.sms("You called 'Everyblock' API on: %s!"%textinput)
     else:
         response.sms("You did not call 'Everyblock' API.")
     return str(response)
