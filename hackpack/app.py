@@ -30,6 +30,7 @@ def voice():
 def sms():
     response = twiml.Response()
     body = request.form['Body']
+    metro_final = ''
     if "everyblock" in body:
         textinput = body.replace('everyblock','')
         if textinput.isdigit():
