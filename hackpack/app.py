@@ -86,7 +86,6 @@ def sms():
 def index():
     params = {
         'Voice Request URL': url_for('.voice', _external=True),
-        'SMS Request URL': url_for('.sms', _external=True),
-        'Client URL': url_for('.client', _external=True)}
+        'SMS Request URL': url_for('.sms', _external=True)
     return render_template('index.html', params=params,
                            configuration_error=None)
