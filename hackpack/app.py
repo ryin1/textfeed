@@ -33,8 +33,8 @@ def sms():
     print body
     metro_final = ''
     output = 'Nothing was found.'
-    if "everyblock" in body:
-        textinput = body.replace('everyblock ','')
+    if "everyblock" in body.lower():
+        textinput = body.split(' ')[1]
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
         #print textinput, type(textinput)
