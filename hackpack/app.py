@@ -33,6 +33,7 @@ def sms():
     if "everyblock" in body:
         output = body.replace('everyblock','')
         response.sms("You called 'Everyblock' API on: %s!"%output)
+        r = requests.get('https://api.everyblock.com/content/')
     else:
         response.sms("You did not call 'Everyblock' API.")
     return str(response)
