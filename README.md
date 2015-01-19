@@ -2,4 +2,4 @@ Uses Twilio/Flask/Python to receive SMS messages and replies with real-time crim
 
 Made from Twilio Hackpack for Heroku and Flask base (https://github.com/RobSpectre/Twilio-Hackpack-for-Heroku-and-Flask)
 
-Won Best Public Safety App from TASER and Honorable Mention for Best Use of Comcast/EveryBlock API
+Made during PennApps Winter 2015: Won Best Public Safety App from TASER and Honorable Mention for Best Use of Comcast/EveryBlock API
