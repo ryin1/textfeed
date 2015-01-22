@@ -1,6 +1,7 @@
 import re
 import requests
 import json
+import praw
 from datetime import datetime
 
 from flask import Flask
@@ -33,7 +34,18 @@ def sms():
     print body
     metro_final = ''
     output = 'Nothing was found.'
-    if "everyblock" in body.lower():
+    if "news" in body.lower() and "everyblock" not in body.lower():
+        #begin edit
+        output = ''
+        r = praw.Reddit(user_agent='news_reader_textfeed')
+        submissions = r.get_subreddit('news').get_hot(limit=3)
+        submission_form = "{}) {} : {} <{}>"
+        print("Headlines:")
+        for sub in submissions:
+            output += sub.title + ". "
+        response.sms(output)
+        #end edit
+    elif "everyblock" in body.lower():
         textinput = body.split(' ')[1]
         metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
         #find which metro it is in
