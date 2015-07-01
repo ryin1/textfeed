@@ -16,116 +16,93 @@ from twilio.util import TwilioCapability
 app = Flask(__name__, static_url_path='/static')
 app.config.from_pyfile('local_settings.py')
 
+API_KEY = 'fc51e71739c072154f4f8d58ed4f9ec0770aee76'
 
 # Voice Request URL
 @app.route('/voice', methods=['GET', 'POST'])
 def voice():
     response = twiml.Response()
-    response.say("Congratulations! You deployed the Twilio Hackpack "
-                 "for Heroku and Flask.")
+    response.say("Supported services: Everyblock, News, Maps. Version 1.1")
     return str(response)
-
 
 # SMS Request URL
 @app.route('/sms', methods=['GET', 'POST'])
 def sms():
     response = twiml.Response()
     body = request.form['Body'].lower()
-    print body
-    metro_final = ''
-    output = 'Nothing was found.'
-    if "news" in body.lower() and "everyblock" not in body.lower():
-        #begin edit
-        output = ''
+
+    def news():
+        '''Returns top 3 hot news stories fetched from news subreddit.'''
         r = praw.Reddit(user_agent='news_reader_textfeed')
         submissions = r.get_subreddit('news').get_hot(limit=3)
-        submission_form = "{}) {} : {} <{}>"
-        print("Headlines:")
-        for sub in submissions:
-            output += sub.title + ". "
-        response.sms(output)
-        #end edit
-    elif "everyblock" in body.lower():
-        textinput = body.split(' ')[1]
-        metros = ['philly', 'denver', 'houston', 'boston', 'chicago']
-        #find which metro it is in
-        #print textinput, type(textinput)
-        if textinput.isdigit():
-            print 'textinput is digit'
-            texttype = 'zipcodes'
-            for metro in metros:
-                everyblock_url = 'https://api.everyblock.com/content/%s/zipcodes'%metro
-                print everyblock_url
-                r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
-                return_data = json.loads(r.text)
-                for i in return_data:
-                    if textinput == i['name']:
-                        metro_final = metro
-                        break
-        else:
-            texttype = 'neighborhoods'
-            for metro in metros:
-                everyblock_url = 'https://api.everyblock.com/content/%s/neighborhoods'%metro
-                #print 'trying: ',everyblock_url
-                r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
+        return '. '.join(x.title for x in submissions)
 
-                return_data = json.loads(r.text)
-                for i in return_data:
-                    if textinput.title() == i['name']:
-                        print textinput,'is in',metro
-                        metro_final = metro.lower()
-                        textinput = textinput.lower().replace(' ','-')
-                        break
-        #found the metro!
-        if metro_final != '':
-            everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime'%(metro_final, textinput)
-            #everyblock_url = 'https://api.everyblock.com/content/%s/schemas/'%metro_final
-            print everyblock_url
-            r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
-            return_data = json.loads(r.text)
-            if not r or return_data['count'] == 0:
-                everyblock_url = 'https://api.everyblock.com/content/%s/locations/%s/timeline/?schema=crime-reports'%(metro_final, textinput)
-                r = requests.get(everyblock_url, headers = {'Authorization' : 'Token fc51e71739c072154f4f8d58ed4f9ec0770aee76'})
-                #print everyblock_url
-                return_data = json.loads(r.text)
-                #print return_data
-            
-            count = 0
-            #print return_data, type(return_data)
-            #print 'count' in return_data
-            #print return_data['count']
-            if 'count' in return_data or return_data['count'] != 0:
-                output = ''
-            #print return_data
-            for event in return_data['results']:
-                #print 'event', event
-                date = event['item_date']
-                #date in good format
-                date = date[5:7]+'/'+date[8:10]+'/'+date[2:4]
-                #time: find the time
-                timetype = ''
-                if 'dispatch_time' in event['attributes']:
-                    timetype = 'dispatch_time'
-                elif 'crime_time' in event['attributes']:
-                    timetype = 'crime_time'
-                elif 'occurrence_time' in event['attributes']:
-                    timetype = 'occurrence_time'
-                elif 'offense_time' in event['attributes']:
-                    timetype = 'offense_time'
-                else:
-                    print 'else'
-
-                time = datetime.strptime(event['attributes'][timetype][:5], '%H:%M')
-                #print 'time', time
-                time = time.strftime('%I:%M %p')
-                #print event
-                output += event['title']+' on '+event['location_name']+' at '+date+', '+time+'. '
-                count += 1
-                if count == return_data['count'] or count == 2:
+    def everyblock(body_split):
+        '''Returns everyblock crime news feed from Everyblock API.'''
+        # print(body_split)
+        def find_metro(s):
+            # print(s)
+            if s.isdigit():
+                for met in ('philly', 'denver', 'houston', 'boston', 'chicago'):
+                    everyblock_url = 'https://api.everyblock.com/content/{}/zipcodes'.format(met)
+                    r = requests.get(everyblock_url, headers={'Authorization': 'Token {}'.format(API_KEY)}) # want to keep key private!!!
+                    data = json.loads(r.text)
+                    print(data)
+                    for i in data:
+                        if s == i['name']:
+                            return met, s
+            else:
+                for met in ('philly', 'denver', 'houston', 'boston', 'chicago'):
+                    everyblock_url = 'https://api.everyblock.com/content/{}/neighborhoods'.format(met)
+                    r = requests.get(everyblock_url, headers={'Authorization': 'Token {}'.format(API_KEY)}) # want to keep key private!!!
+                    data = json.loads(r.text)
+                    print(s)
+                    for i in data:
+                        if s.title() == i['name']:
+                            return met, s.lower().replace(' ', '-')
+            print('not found error')
+            return 'not found', 'error'
+        
+        metro, location = find_metro(' '.join(body_split[1:]))
+        everyblock_url = 'https://api.everyblock.com/content/{}/locations/{}/timeline/?schema=crime'.format(metro, location)
+        r = requests.get(everyblock_url, headers = {'Authorization': 'Token {}'.format(API_KEY)})
+        data = json.loads(r.text)
+        if not r or data['count'] == 0:
+            everyblock_url = 'https://api.everyblock.com/content/{}/locations/{}/timeline/?schema=crime-reports'.format(metro, location)
+            r = requests.get(everyblock_url, headers = {'Authorization': 'Token {}'.format(API_KEY)})
+            data = json.loads(r.text)
+        
+        count = 0
+        if 'count' in data or data['count'] != 0:
+            output = ''
+        #print data
+        for event in data['results']:
+            date = event['item_date']
+            date = date[5:7]+'/'+date[8:10]+'/'+date[2:4]
+            timetype = ''
+            for i in ('dispatch_time', 'crime_time', 'occurrence_time', 'offense_time'):
+                if i in event['attributes']:
+                    timetype = i
                     break
+            time = datetime.strptime(event['attributes'][timetype][:5], '%H:%M').strftime('%I:%M %p')
+            output += '{event} on {location} at {date}, {time}\n'.format(event=event['title'], location=event['location_name'], date=date, time=time)
+            count += 1
+            if count == data['count'] or count == 2:
+                break
+        return output
+
+    body_split = body.lower().split()
+    if body_split[0] == 'directions':
+        # TO-DO: Maps
+        pass
+    elif body_split[0] == 'news':
+        output = news()
+        response.sms(output)
+    elif body_split[0] == 'everyblock':
+        output = everyblock(body_split)
         response.sms(output)
     else:
-        response.sms('Text "everyblock" and your zip code or town to get a feed!')
+        response.sms('Text options:\n"everyblock [zipcode or town]": crime news feed for your area\n"news": hottest news stories')
     return str(response)
 
 
