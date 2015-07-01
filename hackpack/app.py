@@ -1,6 +1,7 @@
 import re
 import requests
 import json
+import os
 import praw
 from datetime import datetime
 
@@ -16,7 +17,7 @@ from twilio.util import TwilioCapability
 app = Flask(__name__, static_url_path='/static')
 app.config.from_pyfile('local_settings.py')
 
-API_KEY = 'fc51e71739c072154f4f8d58ed4f9ec0770aee76'
+API_KEY = os.environ.get('EVERYBLOCK_KEY', None)
 
 # Voice Request URL
 @app.route('/voice', methods=['GET', 'POST'])
@@ -47,7 +48,6 @@ def sms():
                     everyblock_url = 'https://api.everyblock.com/content/{}/zipcodes'.format(met)
                     r = requests.get(everyblock_url, headers={'Authorization': 'Token {}'.format(API_KEY)}) # want to keep key private!!!
                     data = json.loads(r.text)
-                    print(data)
                     for i in data:
                         if s == i['name']:
                             return met, s
@@ -60,10 +60,11 @@ def sms():
                     for i in data:
                         if s.title() == i['name']:
                             return met, s.lower().replace(' ', '-')
-            print('not found error')
-            return 'not found', 'error'
+            return 'ERROR', 'not found'
         
         metro, location = find_metro(' '.join(body_split[1:]))
+        if metro == 'ERROR':
+            return 'EveryBlock couldn\'t determine your location. Try "everyblock [zipcode or town]" to get a crime news feed for your area.'
         everyblock_url = 'https://api.everyblock.com/content/{}/locations/{}/timeline/?schema=crime'.format(metro, location)
         r = requests.get(everyblock_url, headers = {'Authorization': 'Token {}'.format(API_KEY)})
         data = json.loads(r.text)
@@ -102,7 +103,7 @@ def sms():
         output = everyblock(body_split)
         response.sms(output)
     else:
-        response.sms('Text options:\n"everyblock [zipcode or town]": crime news feed for your area\n"news": hottest news stories')
+        response.sms('Text options:\n"everyblock [zipcode or town/city]": crime news feed for your area\n"news": hottest news stories')
     return str(response)
 
 
